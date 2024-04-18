@@ -4,11 +4,15 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
-import org.mockito.Mockito;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
 import org.springframework.boot.test.context.SpringBootTest;
 import tdd.exo1.entity.Book;
 import tdd.exo1.exception.ObjectNotFoundException;
-import tdd.exo1.mock.MockBookDataService;
+import tdd.exo1.service.book.BookDBService;
+import tdd.exo1.service.book.BookDataDBService;
+import tdd.exo1.service.book.BookDataWebService;
+import tdd.exo1.service.book.BookInfoService;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -17,14 +21,16 @@ import static org.mockito.Mockito.*;
 @SpringBootTest
 class BookInfoServiceTest {
 
-    // DataBase Mock Service
-    BookDataService mockDBDataService;
+    @Mock
+    BookDataDBService bookDataDBService;
 
-    // Web Mock Service
-    BookDataService mockWEBDataService;
+    @Mock
+    BookDataWebService mockWEBDataService;
 
-    BookDBUpdater mockDBUpdaterService;
+    @Mock
+    BookDBService mockDBService;
 
+    @InjectMocks
     BookInfoService infoService;
 
     Book bookExample1;
@@ -34,16 +40,12 @@ class BookInfoServiceTest {
 
     @BeforeEach
     public void loadBook() {
-        mockDBDataService = Mockito.mock(BookDataService.class);
-        mockWEBDataService = Mockito.mock(BookDataService.class);
-        mockDBUpdaterService = Mockito.mock(BookDBUpdater.class);
-        infoService = new BookInfoService(mockDBDataService, mockWEBDataService, mockDBUpdaterService);
         bookExample1 = new Book("2080421204", "Le seigneur des Anneaux", 1223, "J. R. R. Tolkien");
     }
 
     @Test
     public void canGetBook() throws ObjectNotFoundException {
-        when(mockDBDataService.fetch(bookExample1.getIsbn())).thenReturn(bookExample1);
+        when(bookDataDBService.fetch(bookExample1.getIsbn())).thenReturn(bookExample1);
 
         Book foundBook = infoService.getBookInfo(bookExample1.getIsbn());
 
@@ -53,7 +55,7 @@ class BookInfoServiceTest {
     @Test
     public void canGetBookWithMissingFromDB() throws ObjectNotFoundException {
         // For the ISBN of the example book, the DB service will return null
-        when(mockDBDataService.fetch(bookExample1.getIsbn())).thenReturn(null);
+        when(bookDataDBService.fetch(bookExample1.getIsbn())).thenReturn(null);
 
         // For the ISBN of the example book, the WEB service will return the example book object
         when(mockWEBDataService.fetch(bookExample1.getIsbn())).thenReturn(bookExample1);
@@ -67,7 +69,7 @@ class BookInfoServiceTest {
     @Test
     public void canGetBookWithDBFirst() throws ObjectNotFoundException {
         // For the ISBN of the example book, the DB service will return the example book object
-        when(mockDBDataService.fetch(bookExample1.getIsbn())).thenReturn(bookExample1);
+        when(bookDataDBService.fetch(bookExample1.getIsbn())).thenReturn(bookExample1);
 
         // For the ISBN of the example book, the WEB service will return the example book object
         when(mockWEBDataService.fetch(bookExample1.getIsbn())).thenReturn(bookExample1);
@@ -83,7 +85,7 @@ class BookInfoServiceTest {
     @Test
     public void cantGetBookWithInvalidISBN() {
         // For the ISBN of the example book, the DB service will return null
-        when(mockDBDataService.fetch(bookExample1.getIsbn())).thenThrow(new ObjectNotFoundException(""));
+        when(bookDataDBService.fetch(bookExample1.getIsbn())).thenThrow(new ObjectNotFoundException(""));
 
         // For the ISBN of the example book, the WEB service will return null
         when(mockWEBDataService.fetch(bookExample1.getIsbn())).thenReturn(null);
@@ -93,28 +95,29 @@ class BookInfoServiceTest {
 
     @Test
     public void isBookUpdatedInDB() throws ObjectNotFoundException {
-        when(mockDBUpdaterService.updateDB(bookExample1)).thenReturn(true);
+        when(mockDBService.updateDB(bookExample1)).thenReturn(true);
 
         // For the ISBN of the example book, the DB service will return null
-        when(mockDBDataService.fetch(bookExample1.getIsbn())).thenReturn(null);
+        when(bookDataDBService.fetch(bookExample1.getIsbn())).thenReturn(null);
 
         // For the ISBN of the example book, the WEB service will return the example book object
         when(mockWEBDataService.fetch(bookExample1.getIsbn())).thenReturn(bookExample1);
 
-        Book foundBook = infoService.getBookInfo(bookExample1.getIsbn());
+        infoService.getBookInfo(bookExample1.getIsbn());
 
-        verify(mockDBUpdaterService).updateDB(bookExample1);
+        verify(mockDBService).updateDB(bookExample1);
     }
 
     @Test
     public void testCreateBook() {
-        when(mockDBUpdaterService.updateDB(bookExample1)).thenReturn(true);
+        when(mockDBService.createDB(bookExample1)).thenReturn(true);
 
-        when(mockDBDataService.fetch(bookExample1.getIsbn())).thenReturn(bookExample1);
+        mockDBService.createDB(bookExample1);
 
         ArgumentCaptor<Book> bookArgumentCaptor = ArgumentCaptor.forClass(Book.class);
-        verify(mockDBUpdaterService).updateDB(bookArgumentCaptor.capture());
 
+        verify(mockDBService).createDB(bookArgumentCaptor.capture());
         assertEquals(bookExample1.getIsbn(), bookArgumentCaptor.getValue().getIsbn());
+        verifyNoInteractions(mockWEBDataService);
     }
 }

@@ -1,15 +1,14 @@
-package tdd.exo1.service;
+package tdd.exo1.service.book;
 
 import tdd.exo1.entity.Book;
 
-public class BookDBUpdater {
+public class BookDBService {
 
     public boolean updateDB(Book b) {
         throw new RuntimeException("Not Implemented yet");
     }
 
-    public void createDB(String isbn, Book b) {
-        this.updateDB(b);
+    public boolean createDB(Book b) {
         throw new RuntimeException("Not implemented yet");
     }
 }

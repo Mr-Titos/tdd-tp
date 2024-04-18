@@ -6,9 +6,7 @@ public class ISBNService {
 
     private final short isbnLength10 = 10;
     private final short isbnLength13 = 13;
-
     private final short moduloIsbn10 = 11;
-
     private final short moduloIsbn13 = 10;
 
     public boolean ValidatorISBN(String isbn) throws ISBNFormatException {
