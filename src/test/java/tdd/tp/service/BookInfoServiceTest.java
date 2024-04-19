@@ -12,7 +12,6 @@ import tdd.tp.enums.BookSize;
 import tdd.tp.exception.BookFormatException;
 import tdd.tp.exception.ISBNFormatException;
 import tdd.tp.exception.ObjectNotFoundException;
-import tdd.tp.service.book.BookDBService;
 import tdd.tp.service.book.BookDataDBService;
 import tdd.tp.service.book.BookDataWebService;
 import tdd.tp.service.book.BookInfoService;
@@ -29,13 +28,10 @@ class BookInfoServiceTest {
     @Mock
     ISBNService isbnService;
     @Mock
-    BookDataDBService bookDataDBService;
+    BookDataDBService dbDataService;
 
     @Mock
     BookDataWebService webDataService;
-
-    @Mock
-    BookDBService dbService;
 
     @InjectMocks
     BookInfoService infoService;
@@ -59,7 +55,7 @@ class BookInfoServiceTest {
 
     @Test
     public void canGetBookById() throws ObjectNotFoundException {
-        when(bookDataDBService.findByID(bookExample1.getIsbn())).thenReturn(bookExample1);
+        when(dbDataService.findByID(bookExample1.getIsbn())).thenReturn(bookExample1);
 
         Book foundBook = infoService.getBookByID(bookExample1.getIsbn());
 
@@ -70,7 +66,7 @@ class BookInfoServiceTest {
     public void canGetBooksByTitle() throws ObjectNotFoundException {
         List<Book> books = new ArrayList<>();
         books.add(bookExample1);
-        when(bookDataDBService.findAllByTitle(bookExample1.getTitle())).thenReturn(books);
+        when(dbDataService.findAllByTitle(bookExample1.getTitle())).thenReturn(books);
 
         List<Book> foundBooks = infoService.getBooksByTitle(bookExample1.getTitle());
 
@@ -81,7 +77,7 @@ class BookInfoServiceTest {
     public void canGetBooksByAuthor() throws ObjectNotFoundException {
         List<Book> books = new ArrayList<>();
         books.add(bookExample1);
-        when(bookDataDBService.findAllByAuthor(bookExample1.getAuthor())).thenReturn(books);
+        when(dbDataService.findAllByAuthor(bookExample1.getAuthor())).thenReturn(books);
 
         List<Book> foundBooks = infoService.getBooksByAuthor(bookExample1.getAuthor());
 
@@ -91,7 +87,7 @@ class BookInfoServiceTest {
     @Test
     public void canGetBookWithMissingFromDB() throws ObjectNotFoundException {
         // For the ISBN of the example book, the DB service will return null
-        when(bookDataDBService.findByID(bookExample1.getIsbn())).thenReturn(null);
+        when(dbDataService.findByID(bookExample1.getIsbn())).thenReturn(null);
 
         // For the ISBN of the example book, the WEB service will return the example book object
         when(webDataService.findByID(bookExample1.getIsbn())).thenReturn(bookExample1);
@@ -105,7 +101,7 @@ class BookInfoServiceTest {
     @Test
     public void canGetBookWithDBFirst() throws ObjectNotFoundException {
         // For the ISBN of the example book, the DB service will return the example book object
-        when(bookDataDBService.findByID(bookExample1.getIsbn())).thenReturn(bookExample1);
+        when(dbDataService.findByID(bookExample1.getIsbn())).thenReturn(bookExample1);
 
         // For the ISBN of the example book, the WEB service will return the example book object
         when(webDataService.findByID(bookExample1.getIsbn())).thenReturn(bookExample1);
@@ -121,7 +117,7 @@ class BookInfoServiceTest {
     @Test
     public void cantGetBookWithInvalidISBN() {
         // For the ISBN of the example book, the DB service will return null
-        when(bookDataDBService.findByID(bookExample1.getIsbn())).thenThrow(new ObjectNotFoundException(""));
+        when(dbDataService.findByID(bookExample1.getIsbn())).thenThrow(new ObjectNotFoundException(""));
 
         // For the ISBN of the example book, the WEB service will return null
         when(webDataService.findByID(bookExample1.getIsbn())).thenReturn(null);
@@ -131,12 +127,12 @@ class BookInfoServiceTest {
 
     @Test
     public void isBookUpdatedInDB() throws ObjectNotFoundException, BookFormatException {
-        when(bookDataDBService.findByID(bookExample1.getIsbn())).thenReturn(null);
+        when(dbDataService.findByID(bookExample1.getIsbn())).thenReturn(null);
         when(webDataService.findByID(bookExample1.getIsbn())).thenReturn(bookExample1);
 
         infoService.updateBook(bookExample1); // Will throw an exception if bookExample1 is invalid
 
-        verify(dbService, times(1)).updateBook(bookExample1);
+        verify(dbDataService, times(1)).updateBook(bookExample1);
     }
 
 
@@ -154,7 +150,7 @@ class BookInfoServiceTest {
         when(webDataService.findByID(invalidBook.getIsbn())).thenReturn(invalidBook);
 
         assertThrows(BookFormatException.class, () -> infoService.updateBook(invalidBook));
-        verify(dbService, times(0)).updateBook(invalidBook);
+        verify(dbDataService, times(0)).updateBook(invalidBook);
     }
 
 
@@ -162,12 +158,12 @@ class BookInfoServiceTest {
     public void createBookSuccessful() throws ISBNFormatException, BookFormatException {
         when(isbnService.ValidatorISBN(bookExample1.getIsbn())).thenReturn(true);
 
-        when(dbService.createBook(bookExample1)).thenReturn(bookExample1);
+        when(dbDataService.createBook(bookExample1)).thenReturn(bookExample1);
 
         ArgumentCaptor<Book> bookArgumentCaptor = ArgumentCaptor.forClass(Book.class);
 
         assertEquals(bookExample1, infoService.createBook(bookExample1));
-        verify(dbService, times(1)).createBook(bookArgumentCaptor.capture());
+        verify(dbDataService, times(1)).createBook(bookArgumentCaptor.capture());
         assertEquals(bookExample1.getIsbn(), bookArgumentCaptor.getValue().getIsbn());
         verifyNoInteractions(webDataService);
     }
@@ -189,7 +185,7 @@ class BookInfoServiceTest {
         invalidBookCompleted.editor("EA");
 
         when(webDataService.findByID(invalidBook.getIsbn())).thenReturn(invalidBookCompleted);
-        when(dbService.createBook(invalidBook)).thenReturn(invalidBookCompleted);
+        when(dbDataService.createBook(invalidBook)).thenReturn(invalidBookCompleted);
 
         assertEquals(invalidBookCompleted, infoService.createBook(invalidBook));
         verify(webDataService, times(1)).findByID(invalidBook.getIsbn());
@@ -210,26 +206,26 @@ class BookInfoServiceTest {
 
         assertThrows(ISBNFormatException.class, () -> infoService.createBook(invalidBook));
         verify(webDataService, times(0)).findByID(invalidBook.getIsbn());
-        verify(dbService, times(0)).createBook(invalidBook);
+        verify(dbDataService, times(0)).createBook(invalidBook);
     }
 
     @Test
     public void deleteBookWithValidISBN() throws ObjectNotFoundException {
         String isbn = "9782290396391";
-        when(bookDataDBService.findByID(isbn)).thenReturn(bookExample1);
+        when(dbDataService.findByID(isbn)).thenReturn(bookExample1);
 
         infoService.deleteBook(isbn);
-        verify(dbService, times(1)).deleteBook(bookExample1);
+        verify(dbDataService, times(1)).deleteBook(bookExample1);
     }
 
     @Test
     public void deleteBookWithInvalidISBN() {
         String isbn = "9782290396391A";
 
-        when(bookDataDBService.findByID(isbn)).thenThrow(new ObjectNotFoundException(""));
+        when(dbDataService.findByID(isbn)).thenThrow(new ObjectNotFoundException(""));
 
         assertThrows(ObjectNotFoundException.class, () -> infoService.deleteBook(isbn));
-        verify(dbService, times(0)).deleteBook(any(Book.class));
+        verify(dbDataService, times(0)).deleteBook(any(Book.class));
     }
 
 }

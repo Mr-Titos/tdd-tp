@@ -33,4 +33,16 @@ public class BookDataDBService implements DataService<Book> {
         List<Book> books = bookRepository.findAllByAuthor(author);
         throw new RuntimeException("Not Implemented");
     }
+
+    public Book updateBook(Book b) {
+        throw new RuntimeException("Not Implemented yet");
+    }
+
+    public Book createBook(Book b) {
+        throw new RuntimeException("Not implemented yet");
+    }
+
+    public void deleteBook(Book b) {
+        throw new RuntimeException("Not implemented yet");
+    }
 }

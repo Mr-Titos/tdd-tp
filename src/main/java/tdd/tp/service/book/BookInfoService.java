@@ -18,13 +18,10 @@ public class BookInfoService {
 
     private final BookDataWebService bookDataWebService;
 
-    private final BookDBService bookDBService;
 
-
-    public BookInfoService(BookDataDBService bookDataDBService, BookDataWebService bookDataWebService, BookDBService bookDBService, ISBNService isbnService) {
+    public BookInfoService(BookDataDBService bookDataDBService, BookDataWebService bookDataWebService, ISBNService isbnService) {
         this.bookDataDBService = bookDataDBService;
         this.bookDataWebService = bookDataWebService;
-        this.bookDBService = bookDBService;
         this.isbnService = isbnService;
     }
 
@@ -68,7 +65,7 @@ public class BookInfoService {
             throw new BookFormatException("field(s) missing : " + fields);
         }
 
-        bookDBService.updateBook(b);
+        bookDataDBService.updateBook(b);
     }
 
     public Book createBook(Book b) throws ISBNFormatException, BookFormatException {
@@ -90,12 +87,12 @@ public class BookInfoService {
                 throw new BookFormatException(e.getMessage());
             }
         }
-        return bookDBService.createBook(b);
+        return bookDataDBService.createBook(b);
     }
 
     public void deleteBook(String isbn) throws ObjectNotFoundException {
         Book b = this.getBookByID(isbn); // Throw an exception
-        bookDBService.deleteBook(b);
+        bookDataDBService.deleteBook(b);
     }
 
     private boolean isbnValid(String isbn) {
