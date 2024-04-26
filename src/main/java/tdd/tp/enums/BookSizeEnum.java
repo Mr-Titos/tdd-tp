@@ -1,6 +1,6 @@
 package tdd.tp.enums;
 
-public enum BookSize {
+public enum BookSizeEnum {
     POCHE,
     BROCHE,
     GRAND_FORMAT

@@ -1,29 +1,24 @@
 package tdd.tp.service.book;
 
+import lombok.AllArgsConstructor;
 import tdd.tp.entity.Book;
 import tdd.tp.exception.BookFormatException;
 import tdd.tp.exception.ISBNFormatException;
 import tdd.tp.exception.ObjectNotFoundException;
 import tdd.tp.service.ISBNService;
+import tdd.tp.utils.EntityUtils;
 
 import java.lang.reflect.Field;
-import java.util.ArrayList;
 import java.util.List;
 
-public class BookInfoService {
+@AllArgsConstructor
+public class BookService {
 
     private final ISBNService isbnService;
 
     private final BookDataDBService bookDataDBService;
 
     private final BookDataWebService bookDataWebService;
-
-
-    public BookInfoService(BookDataDBService bookDataDBService, BookDataWebService bookDataWebService, ISBNService isbnService) {
-        this.bookDataDBService = bookDataDBService;
-        this.bookDataWebService = bookDataWebService;
-        this.isbnService = isbnService;
-    }
 
     public Book getBookByID(String isbn) throws ObjectNotFoundException {
         Book b = bookDataDBService.findByID(isbn);
@@ -32,7 +27,7 @@ public class BookInfoService {
             b = bookDataWebService.findByID(isbn);
 
         if (b == null)
-            throw new ObjectNotFoundException("No book found for id " + isbn);
+            throw new ObjectNotFoundException("Book not found for id " + isbn);
 
         return b;
     }
@@ -55,37 +50,28 @@ public class BookInfoService {
 
         return books;
     }
-    public void updateBook(Book b) throws ObjectNotFoundException, BookFormatException {
+    public Book updateBook(Book b) throws ObjectNotFoundException, BookFormatException {
         this.getBookByID(b.getIsbn()); // Throw an exception
-        List<String> fieldsError = this.isBookInformationFilled(b);
+        List<Field> fieldsError = EntityUtils.containsEmptyFieldsOrNegativeInteger(b);
 
         if (fieldsError.size() > 0) {
             StringBuilder fields = new StringBuilder();
-            fieldsError.forEach(f -> fields.append(f).append(' '));
+            fieldsError.forEach(f -> fields.append(f.getName()).append(' '));
             throw new BookFormatException("field(s) missing : " + fields);
         }
 
         bookDataDBService.updateBook(b);
+        return b;
     }
 
-    public Book createBook(Book b) throws ISBNFormatException, BookFormatException {
+    public Book createBook(Book b) throws ISBNFormatException {
         if (!this.isbnValid(b.getIsbn()))
             throw new ISBNFormatException("ISBN invalid check sum");
 
-        List<String> bookFieldsInError = this.isBookInformationFilled(b);
+        List<Field> bookFieldsInError = EntityUtils.containsEmptyFieldsOrNegativeInteger(b);
         if (bookFieldsInError.size() > 0) {
             Book webDataBook = bookDataWebService.findByID(b.getIsbn());
-            try {
-                // A TESTER
-                for (String fieldNameInError : bookFieldsInError) {
-                    Field field = b.getClass().getDeclaredField(fieldNameInError);
-                    field.setAccessible(true);
-                    Object valueFromWeb = field.get(webDataBook);
-                    field.set(b, valueFromWeb);
-                }
-            } catch (Exception e) {
-                throw new BookFormatException(e.getMessage());
-            }
+            EntityUtils.replaceValuesFromFieldName(bookFieldsInError, b, webDataBook);
         }
         return bookDataDBService.createBook(b);
     }
@@ -103,25 +89,6 @@ public class BookInfoService {
             isbnValid = false;
         }
         return isbnValid;
-    }
-
-    public List<String> isBookInformationFilled(Book b) {
-        List<String> propertiesNameInError = new ArrayList<>();
-
-        if(b.getAuthor().isEmpty())
-            propertiesNameInError.add("author");
-        if(b.getIsbn().isEmpty())
-            propertiesNameInError.add("isbn");
-        if (b.getNbPage() <= 0)
-            propertiesNameInError.add("nbPage");
-        if (b.getTitle().isEmpty())
-            propertiesNameInError.add("title");
-        if (b.getEditor().isEmpty())
-            propertiesNameInError.add("editor");
-        if (b.getSize() == null)
-            propertiesNameInError.add("format");
-
-        return propertiesNameInError;
     }
 
 }

@@ -1,6 +1,5 @@
 package tdd.tp.service;
 
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -8,13 +7,13 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.springframework.boot.test.context.SpringBootTest;
 import tdd.tp.entity.Book;
-import tdd.tp.enums.BookSize;
+import tdd.tp.enums.BookSizeEnum;
 import tdd.tp.exception.BookFormatException;
 import tdd.tp.exception.ISBNFormatException;
 import tdd.tp.exception.ObjectNotFoundException;
 import tdd.tp.service.book.BookDataDBService;
 import tdd.tp.service.book.BookDataWebService;
-import tdd.tp.service.book.BookInfoService;
+import tdd.tp.service.book.BookService;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -24,33 +23,28 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.*;
 
 @SpringBootTest
-class BookInfoServiceTest {
+class BookServiceTest {
     @Mock
     ISBNService isbnService;
     @Mock
     BookDataDBService dbDataService;
-
     @Mock
     BookDataWebService webDataService;
-
     @InjectMocks
-    BookInfoService infoService;
-
+    BookService infoService;
     Book bookExample1;
 
-    @BeforeAll
-    static void contextLoads() {}
-
     @BeforeEach
-    public void loadBook() {
-        bookExample1 = new Book()
+    public void loadContext() {
+        bookExample1 = Book.builder()
                 .author("J. R. R. Tolkien")
                 .editor("Editor 1")
                 .isbn("2080421204")
                 .title("Le seigneur des Anneaux")
                 .nbPage(1223)
-                .size(BookSize.POCHE)
-                .isAvailable(true);
+                .size(BookSizeEnum.POCHE)
+                .isAvailable(true)
+                .build();
     }
 
     @Test
@@ -138,14 +132,15 @@ class BookInfoServiceTest {
 
     @Test
     public void isBookUpdateRejected() {
-        Book invalidBook = new Book()
+        Book invalidBook = Book.builder()
                 .author("")
                 .editor("Editor 3")
                 .isbn("9782290396391")
                 .title("Oui")
                 .nbPage(123)
-                .size(BookSize.POCHE)
-                .isAvailable(true);
+                .size(BookSizeEnum.POCHE)
+                .isAvailable(true)
+                .build();
 
         when(webDataService.findByID(invalidBook.getIsbn())).thenReturn(invalidBook);
 
@@ -170,19 +165,20 @@ class BookInfoServiceTest {
 
     @Test
     public void createBookWithInvalidBook() throws ISBNFormatException, BookFormatException {
-        Book invalidBook = new Book()
+        Book invalidBook = Book.builder()
                 .author("ALLO")
                 .editor("")
                 .isbn("9782290396391")
                 .title("Non")
                 .nbPage(123)
-                .size(BookSize.POCHE)
-                .isAvailable(true);
+                .size(BookSizeEnum.POCHE)
+                .isAvailable(true)
+                .build();
 
         when(isbnService.ValidatorISBN(invalidBook.getIsbn())).thenReturn(true);
 
         Book invalidBookCompleted = new Book(invalidBook);
-        invalidBookCompleted.editor("EA");
+        invalidBookCompleted.setEditor("EA");
 
         when(webDataService.findByID(invalidBook.getIsbn())).thenReturn(invalidBookCompleted);
         when(dbDataService.createBook(invalidBook)).thenReturn(invalidBookCompleted);
@@ -193,14 +189,15 @@ class BookInfoServiceTest {
 
     @Test
     public void createBookUnsuccessful() throws ISBNFormatException {
-        Book invalidBook = new Book()
+        Book invalidBook = Book.builder()
                 .author("ALLO")
                 .editor("")
                 .isbn("97822903963A")
                 .title("Non")
                 .nbPage(123)
-                .size(BookSize.POCHE)
-                .isAvailable(true);
+                .size(BookSizeEnum.POCHE)
+                .isAvailable(true)
+                .build();
 
         when(isbnService.ValidatorISBN(invalidBook.getIsbn())).thenReturn(false);
 

@@ -6,15 +6,15 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import tdd.tp.entity.Book;
 
 @Controller
-public class BookController {
+public class SubscriberController {
 
     // Render the form
-    @RequestMapping(value="/",method= RequestMethod.GET)
+    @RequestMapping(value="/subscriber",method= RequestMethod.GET)
     public Book get()
     {
         throw new RuntimeException("Not Implemented");
     }
 
-    @RequestMapping(value="/",method=RequestMethod.POST)
+    @RequestMapping(value="/subscriber",method=RequestMethod.POST)
     public Book create(Book book) { throw new RuntimeException("Not Implemented"); }
 }

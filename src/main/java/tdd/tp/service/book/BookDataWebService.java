@@ -18,7 +18,7 @@ public class BookDataWebService implements DataService<Book> {
             session = new BookDataWebService();
         return session;
     }
-    @Override
+    @Override // Mimic the rest external request as a simple List<> for now 😎
     public Book findByID(String id) {
         return books.stream().filter(b -> b.getIsbn().equals(id)).findFirst().orElseThrow(null);
     }
